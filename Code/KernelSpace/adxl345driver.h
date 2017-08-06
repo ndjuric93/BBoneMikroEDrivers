@@ -106,17 +106,8 @@ typedef struct coordinates {
 
 struct coordinates* init_coords(void); 
 
-//I2C Client for ADXL345 Chip
-static struct i2c_client *adxl345_chip; 
-
 //static int adxl345_probe(struct i2c_client *client, const struct i2c_device_id *id);
 //static int adxl345_remove(struct i2c_client *client); 
-
-int adxl345_write_word(struct i2c_client *client, u8 reg, u16 value); 
-int adxl345_write_byte(struct i2c_client *client, u8 reg, u16 value); 
-
-int adxl345_read_word(struct i2c_client *client, u8 reg); 
-int adxl345_read_byte(struct i2c_client *client, u8 reg); 
 
 //Init function
 void adxl345_init(struct i2c_client *client);
@@ -125,5 +116,12 @@ void power_sequence(struct i2c_client *client);
 void set_sensitivity(struct i2c_client *client, u8 value);
 void set_bandwidth(struct i2c_client *client, u8 value);
 //Adxl input functions
-void get_values(struct i2c_client *client, s32 *x_val, s32 *y_val, s32 *z_val, float scale);
+void get_values(struct i2c_client *client, struct coordinates* coords, float scale);
+
+int adxl345_write_word(struct i2c_client *client, u8 reg, u16 value); 
+int adxl345_write_byte(struct i2c_client *client, u8 reg, u16 value); 
+
+int adxl345_read_word(struct i2c_client *client, u8 reg); 
+int adxl345_read_byte(struct i2c_client *client, u8 reg); 
+
 #endif

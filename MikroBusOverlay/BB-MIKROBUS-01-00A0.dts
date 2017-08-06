@@ -162,7 +162,12 @@
 			#size-cells = <0>;
 
 			/* add any i2c devices on the bus here */
-
+			adxl345@0{
+			    compatible="adi, adxl34x"; 
+			    reg = <0x1d>;
+                            interrupt-parent = <&gpio>;
+                            interrupts = < 0 32 4 >; 
+			};
 		};
 	};
 	

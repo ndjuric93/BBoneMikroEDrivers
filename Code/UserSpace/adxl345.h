@@ -1,6 +1,7 @@
 #ifndef ADXL_345_H
 #define ADXL_345_H
 
+#include <linux/types.h> 
 /*       Device Addressing      */
 #define ADXL345_Write                                                                    0xA6
 #define ADXL345_Read                                                                     0xA7
@@ -95,23 +96,23 @@
 
 
 typedef struct coordinates {
-    __s32* x_val;
-    __s32* y_val;
-    __s32* z_val;
+    s32* x_val;
+    s32* y_val;
+    s32* z_val;
 } coordinates;
 
 void ADXL345_init(void);
 void ADXL345_write_byte(unsigned char address, unsigned char value);
-void ADXL345_write_word(__u8 address, __u16 value);
-__s32 ADXL345_read_byte(unsigned char address);
-__s32 ADXL345_read_word(unsigned char address);
+void ADXL345_write_word(u8 address, u16 value);
+s32 ADXL345_read_byte(unsigned char address);
+s32 ADXL345_read_word(unsigned char address);
 void power_sequence(void);
 void set_sensitivity(unsigned char value);
 void set_bandwidth(unsigned char value);
-void get_values(__s32 *x_val, __s32 *y_val, __s32 *z_val,
+void get_values(s32 *x_val, s32 *y_val, s32 *z_val,
         float scale);
-void get_offsets(__s32 *x_val, __s32 *y_val, __s32 *z_val);
-void set_offsets(__s32 *x_val, __s32 *y_val, __s32 *z_val);
+void get_offsets(s32 *x_val, s32 *y_val, s32 *z_val);
+void set_offsets(s32 *x_val, s32 *y_val, s32 *z_val);
 struct coordinates* init_coords(void);
 
 #endif

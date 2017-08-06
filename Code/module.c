@@ -15,9 +15,9 @@ MODULE_AUTHOR("Derek Molloy");      ///< The author -- visible when you use modi
 MODULE_DESCRIPTION("A simple Linux driver for the BBB.");  ///< The description -- see modinfo
 MODULE_VERSION("0.1");              ///< The version of the module
 
-static char *name = "Nemanja!";        ///< An example LKM argument -- default value is "world"
-module_param(name, charp, S_IRUGO); ///< Param desc. charp = char ptr, S_IRUGO can be read/not changed
-MODULE_PARM_DESC(name, "The name to display in /var/log/kern.log");  ///< parameter description
+//static char *name = "Nemanja!";        ///< An example LKM argument -- default value is "world"
+//module_param(name, charp, S_IRUGO); ///< Param desc. charp = char ptr, S_IRUGO can be read/not changed
+//MODULE_PARM_DESC(name, "The name to display in /var/log/kern.log");  ///< parameter description
 
 #define I2C_BUS 1 // Default I2C Bus that Device is using
 #define I2C_ADDRESS 0x1d // Address of the device on the I2C Bus, first slot on ClickShield
