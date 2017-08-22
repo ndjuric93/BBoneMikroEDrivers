@@ -62,6 +62,11 @@
 #define ADXL345_BW_0_10 0x01
 #define ADXL345_BW_0_05 0x00
 
+/* Power options */
+#define ADXL345_AUTO_SLEEP 0x08
+#define ADXL345_CLEAR_ALL  0x00
+#define ADXL345_LINK       0x10
+
 /*      Interrupt pins      */
 //             INT1: 0
 //             INT2: 1
@@ -113,6 +118,8 @@ struct coordinates* init_coords(void);
 void adxl345_init(struct i2c_client *client);
 //ADXL Initiation functions
 void power_sequence(struct i2c_client *client);
+void initiate_interrupts(struct i2c_client *client);
+
 void set_sensitivity(struct i2c_client *client, u8 value);
 void set_bandwidth(struct i2c_client *client, u8 value);
 //Adxl input functions

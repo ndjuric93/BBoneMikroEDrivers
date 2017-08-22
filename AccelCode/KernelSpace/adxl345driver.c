@@ -1,11 +1,13 @@
 #include <linux/slab.h>
 #include <linux/interrupt.h>
 #include <linux/device.h>
+#include <linux/gpio.h>
 
 #include "adxl345utils.h"
 #include "adxl345driver.h"
 
 #define DRIVER_NAME "adxl34x"
+#define INT1_GPIO 27 // GPIO number of Number 1 Place at MikroBUS
 
 MODULE_LICENSE("GPL");              ///< The license type -- this affects runtime behavior
 MODULE_AUTHOR("Nemanja Djuric");      ///< The author -- visible when you use modinfo
@@ -16,9 +18,11 @@ struct adxl345 {
     struct device *dev; 
     struct i2c_client *adxl345_chip; 
     struct coordinates *coords; 
+    struct mutex mutex; 
     int irq; 
 } adxl345;  
 
+struct adxl345* accelerator; 
 // ID_Table for ADXL_345 Driver
 static struct i2c_device_id adxl345_idtable[] = {
 	{ DRIVER_NAME, 0},
@@ -50,44 +54,60 @@ struct coordinates* init_coords() {
     return new_coords;
 }
 
-struct adxl345* accelerator; 
-
 static int adxl345_probe(struct i2c_client *client, const struct i2c_device_id* id) { 
     int err; 
+
     accelerator = kzalloc(sizeof(struct adxl345), GFP_KERNEL); 
 	printk("Commencing ADXL345 Probe function\n"); 
 
     accelerator -> coords = init_coords();
     accelerator -> dev = &(client -> dev); 
-    accelerator -> irq = client -> irq; 
+    accelerator -> irq = gpio_to_irq(INT1_GPIO);
     printk("IRQ Used is %d\n", accelerator -> irq); 
-    
+
+    printk("Initiating mutex\n"); 
+    mutex_init(&(accelerator->mutex)); 
+    printk("Initiated mutex\n"); 
+
     accelerator -> adxl345_chip = client; 
     //Initialisation
     adxl345_init(accelerator -> adxl345_chip); 
-
-    err = request_threaded_irq(accelerator -> irq, 
-                                NULL,
+    
+    /*err = request_threaded_irq(accelerator -> irq, 
+                                adxl34x_irq,
                                 adxl34x_irq,
                                 IRQF_TRIGGER_HIGH | IRQF_ONESHOT, 
                                 dev_name(accelerator -> dev), 
-                                accelerator); 
+                                accelerator); */
+
+    /*err = request_irq(accelerator -> irq,           // requested interrupt
+                      adxl34x_irq, // pointer to handler function
+                      IRQF_TRIGGER_HIGH | IRQF_ONESHOT, // interrupt mode flag
+                      "adxl345 interrupt",        // used in /proc/interrupts
+                      NULL);   */            // the *dev_id shared interrupt lines, NULL is okay
+
+    err = request_threaded_irq(accelerator->irq, NULL, adxl34x_irq,
+                   IRQF_TRIGGER_HIGH | IRQF_ONESHOT,
+                   dev_name(accelerator->dev), accelerator);
+
     if(err) { 
         printk("Threaded IRQ not received\n"); 
     } else {
         printk("Threaded IRQ Received!!!\n");
     }
+    initiate_interrupts(client); 
 
-    get_values(accelerator -> adxl345_chip, accelerator -> coords, 0);
-	get_values(accelerator -> adxl345_chip, accelerator -> coords, 0);
 	printk("End of ADXL345 Probe function\n"); 
+
     return 0; 
 }
 
 static int adxl345_remove(struct i2c_client *client) { 
 	printk("Commencing ADXL345 Remove function\n"); 
     // Coordinates of the ADXL345 should be freed aswell.
+    free_irq(accelerator->irq, accelerator);
     kfree(accelerator); 
+
     printk("End of ADXL345 Probe function\n"); 
     return 0; 
 }
@@ -95,7 +115,7 @@ static int adxl345_remove(struct i2c_client *client) {
 void adxl345_init(struct i2c_client *client) {
     power_sequence(client);
     set_sensitivity(client, _2g);
-    set_bandwidth(client, ADXL345_BW_100);
+    set_bandwidth(client, ADXL345_BW_0_05);
 }
 
 //Board info of ADXL345
@@ -108,10 +128,22 @@ static struct i2c_board_info adxl345_board_info {
 
 void power_sequence(struct i2c_client *client) {
     printk("Starting power sequence\n");
-    adxl345_write_byte(client, ADXL345_POWER_CTL, 0x00);
-    adxl345_write_byte(client, ADXL345_POWER_CTL, 0x10);
-    adxl345_write_byte(client, ADXL345_POWER_CTL, 0x08);
+    adxl345_write_byte(client, ADXL345_POWER_CTL, ADXL345_CLEAR_ALL);
+    adxl345_write_byte(client, ADXL345_POWER_CTL, ADXL345_LINK);
+    adxl345_write_byte(client, ADXL345_POWER_CTL, ADXL345_AUTO_SLEEP);
     printk("End of power sequence\n");
+}
+
+void initiate_interrupts(struct i2c_client *client) {
+    int int_mask = 0; 
+    printk("Interrupt mask is %d\n", int_mask); 
+
+    adxl345_write_byte(client, ADXL345_INT_MAP, ADXL345_INT1_PIN);
+    int_mask |= ADXL345_OVERRUN | ADXL345_INT_DATA_READY_BIT | ADXL345_INT_ACTIVITY_BIT | ADXL345_INT_INACTIVITY_BIT; 
+    adxl345_write_byte(client, ADXL345_INT_ENABLE, int_mask);
+    printk("Written Interrupt stuff to device.\n"); 
+
+    printk("Interrupt mask is %d\n", int_mask); 
 }
 
 void set_sensitivity(struct i2c_client *client, u8 value) {
